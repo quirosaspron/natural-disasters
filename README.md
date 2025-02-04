@@ -1,4 +1,41 @@
+Overview
+This project aims to automate post-disaster damage assessment using deep learning. By leveraging satellite and aerial imagery,
+the model predicts segmentation masks that classify damage into different severity levels. The core of this project is a
+Siamese U-Net architecture with a ResNet50 encoder, trained on the xBD dataset.
+
+
 To get the data and set the train folder visit: https://xview2.org/
+📂 damage-assessment-project
+│── 📂 train
+│   ├── images/         # Pre- and post-disaster images
+│   ├── labels/         # JSON annotations for damage levels
+│── best_dmg_assessment.h5    # Saved trained model
+|── damage_mask.py               # Generates segmentation masks from JSON labels
+│── damage_data_generator.py     # Data generator for training
+│── siam_unet.py                 # Defines Siamese U-Net model
+│── damage_assessment_training.py # Trains the model
+│── damage_assessment_test.py     # Tests the trained model
+│── demo.py                       # Runs predictions on multiple image pairs
+│── display.py                    # Utility to visualize images
+│── tst.py                         # Debugging script for model testing
+│── 📜 README.md
+
+
+Model Architecture
+The Siamese U-Net model consists of:
+🔹 Input: Pairs of pre- and post-disaster images (512, 512, 6).
+🔹 Encoder: Shared ResNet50 extracts feature representations.
+🔹 Feature Concatenation: Combines extracted features from both images.
+🔹 Decoder (U-Net): Upsamples to reconstruct segmentation masks.
+🔹 Output: Pixel-wise classification into four damage levels.
+
+Key Features
+✔ Automated damage segmentation from satellite images.
+✔ Uses transfer learning with a pre-trained ResNet50 encoder.
+✔ Custom data generator for dynamically loading training data.
+✔ Class imbalance handling using focal loss.
+✔ Efficient training & testing pipeline with visualization.
+
 
 damage_mask.py:
 This script contains a function load_mask that generates a segmentation mask from a JSON label file.
