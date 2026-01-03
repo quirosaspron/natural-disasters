@@ -1,82 +1,68 @@
-Overview
-This project aims to automate post-disaster damage assessment using deep learning. By leveraging satellite and aerial imagery,
-the model predicts segmentation masks that classify damage into different severity levels. The core of this project is a
-Siamese U-Net architecture with a ResNet50 encoder, trained on the xBD dataset.
+# Satellite Damage Assessment with Siamese U-Net
+
+This project implements an automated pipeline for post-disaster damage assessment using deep learning and high-resolution satellite imagery. The architecture utilizes a Siamese U-Net with a ResNet50 backbone to perform pixel-wise segmentation across four damage severity levels.
+
+## Overview
+
+Rapid damage assessment is critical for humanitarian aid and disaster response. This model compares pre-disaster and post-disaster satellite images from the xBD dataset to identify structural changes and classify damage intensity.
+
+## Model Architecture
+
+The model is built on a Siamese U-Net framework optimized for change detection:
+
+* **Encoder:** Dual-stream shared ResNet50 (pretrained on ImageNet) extracts high-level spatial features from both image timestamps.
+* **Bottleneck:** Concatenates extracted features to create a combined representation of the scene before and after the event.
+* **Decoder:** A symmetric upsampling path with skip connections that fuses low-level spatial data with high-level semantic data for precise segmentation.
+* **Loss Function:** Custom Focal Loss is implemented to address the significant class imbalance between background pixels and damaged structures.
+
+## Project Structure
+
+## Project Structure
+
+```text
+damage-assessment-project/
+├── train/
+│   ├── images/               # Pre- and post-disaster .png files
+│   └── labels/               # xView2 format JSON annotations
+├── best_dmg_assessment.h5    # Trained model weights
+├── siam_unet.py              # Siamese U-Net architecture definition
+├── damage_data_generator.py  # Keras data sequence for batch processing
+├── damage_mask.py            # Utility to rasterize JSON polygons into masks
+├── damage_assessment_training.py # Model training and optimization pipeline
+├── damage_assessment_test.py  # Single-pair inference and validation
+├── demo.py                   # Batch visualization and overlay generation
+└── README.md
+```
 
 
-To get the data and set the train folder visit: https://xview2.org/
-📂 damage-assessment-project
-│── 📂 train
-│   ├── images/         # Pre- and post-disaster images
-│   ├── labels/         # JSON annotations for damage levels
-│── best_dmg_assessment.h5    # Saved trained model
-|── damage_mask.py               # Generates segmentation masks from JSON labels
-│── damage_data_generator.py     # Data generator for training
-│── siam_unet.py                 # Defines Siamese U-Net model
-│── damage_assessment_training.py # Trains the model
-│── damage_assessment_test.py     # Tests the trained model
-│── demo.py                       # Runs predictions on multiple image pairs
-│── display.py                    # Utility to visualize images
-│── tst.py                         # Debugging script for model testing
-│── 📜 README.md
+## Key Components
 
+### Data Processing
+The pipeline handles the conversion of WKT (Well-Known Text) polygons from the xView2 JSON labels into rasterized segmentation masks. The data generator ensures thread-safe, memory-efficient loading of image pairs during training.
 
-Model Architecture
-The Siamese U-Net model consists of:
-🔹 Input: Pairs of pre- and post-disaster images (512, 512, 6).
-🔹 Encoder: Shared ResNet50 extracts feature representations.
-🔹 Feature Concatenation: Combines extracted features from both images.
-🔹 Decoder (U-Net): Upsamples to reconstruct segmentation masks.
-🔹 Output: Pixel-wise classification into four damage levels.
+### Damage Class Mapping
+The model predicts four distinct classes of damage:
 
-Key Features
-✔ Automated damage segmentation from satellite images.
-✔ Uses transfer learning with a pre-trained ResNet50 encoder.
-✔ Custom data generator for dynamically loading training data.
-✔ Class imbalance handling using focal loss.
-✔ Efficient training & testing pipeline with visualization.
+| Value | Damage Level | Description |
+| :--- | :--- | :--- |
+| 0 | No Damage | Undamaged structures |
+| 1 | Minor Damage | Partially affected, mostly intact |
+| 2 | Major Damage | Significant structural failure |
+| 3 | Destroyed | Total structural collapse |
 
+## Getting Started
 
-damage_mask.py:
-This script contains a function load_mask that generates a segmentation mask from a JSON label file.
-The mask represents different damage classes (no-damage, minor-damage, major-damage, destroyed) as pixel values.
-The script also includes a test section to visualize the generated mask using matplotlib.
+1. **Data Acquisition:**
+Download the dataset from xView2.org and place the files in the /train directory following the structure outlined above.
 
-damage_data_generator.py:
-This script defines a DamageDataGenerator class that inherits from tensorflow.keras.utils.Sequence. 
-It is used to generate batches of pre- and post-disaster images along with their corresponding damage masks for training the model.
-The generator pairs pre- and post-disaster images and their corresponding JSON labels, resizes them, and loads them into memory.
+2. **Training:**
+Initialize the ResNet50 encoder and begin training by running:
+`python damage_assessment_training.py`
 
-siam_unet.py:
-This script defines a Siamese U-Net model for damage segmentation. The model uses a shared ResNet50 encoder for both pre- and post-disaster images,
-concatenates the features, and then passes them through a decoder to produce a damage segmentation mask.
-The model is designed to learn a damage map with a contractive loss layer and reconstruct the final segmentation mask.
+3. **Inference and Visualization:**
+To run predictions on test imagery and view the damage overlays:
+`python demo.py`
 
-damage_assessment_training.py:
-This script is responsible for training the Siamese U-Net model. It uses the DamageDataGenerator to load data,
-defines a custom focal loss function, and compiles the model with the Adam optimizer.
-The script also includes a custom MeanIoU metric for evaluating the model during training.
-After training, the model is saved to a file.
+## Evaluation
 
-damage_assessment_test.py:
-This script loads the trained model and tests it on a single pair of pre- and post-disaster images.
-It preprocesses the images, makes predictions, and visualizes the results, including the predicted damage mask and an overlay of the mask on the post-disaster image.
-
-demo.py:
-This script is a more generalized version of the testing script. It processes multiple image pairs, predicts damage masks, and displays the results using matplotlib.
-It also includes a function to overlay the predicted damage mask on the post-disaster image.
-
-display.py:
-This script is a simple utility to load and display an image from the dataset. It can be used to quickly visualize the raw images before processing.
-
-tst.py:
-Processes a single image pair, and visualizes the results. It includes a function to overlay the predicted damage mask on the post-disaster image and display the results.
-
-Key Components:
-Data Loading and Preprocessing: The scripts handle loading and preprocessing of images and JSON labels, resizing them to a consistent size, and generating segmentation masks.
-
-Model Definition: The Siamese U-Net model is defined with a shared encoder and a decoder that produces a damage segmentation mask.
-
-Training: The model is trained using a custom focal loss function.
-
-Testing and Visualization: The trained model is tested on new images, and the results are visualized using matplotlib.
+The model's performance is measured using Mean Intersection over Union (mIoU) and pixel-wise accuracy. Focal Loss is used during training to ensure the model remains sensitive to the "Destroyed" and "Major Damage" classes, which are statistically rarer in the dataset.
