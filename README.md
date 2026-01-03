@@ -17,8 +17,6 @@ The model is built on a Siamese U-Net framework optimized for change detection:
 
 ## Project Structure
 
-## Project Structure
-
 ```text
 damage-assessment-project/
 ├── train/
